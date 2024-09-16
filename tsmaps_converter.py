@@ -36,6 +36,7 @@ for path in fits_paths:
     probs = np.zeros(len(mask))
     lh_values = np.exp(-llh_values)
     probs[mask] = lh_values[mask]/np.sum(lh_values[mask])
+    probs = probs.clip(1.e-16, None)
     n_pixels = float(len(probs))
     nside = hp.pixelfunc.npix2nside(n_pixels)
     index = np.where(probs == np.max(probs))
