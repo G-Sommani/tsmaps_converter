@@ -33,10 +33,13 @@ for path in fits_paths:
     ra_deg = header_dict["RA"]  
     dec_deg = header_dict["DEC"]
     mask = ~np.isnan(llh_values)
-    probs = np.zeros(len(mask))
+    probs = np.empty(len(mask))
+    min_val = 1.e-16
+    probs.fill(min_val)
     lh_values = np.exp(-llh_values)
     probs[mask] = lh_values[mask]/np.sum(lh_values[mask])
-    probs = probs.clip(1.e-16, None)
+    probs = probs.clip(min_val, None).astype("float64")
+    probs = probs/np.sum(probs)
     n_pixels = float(len(probs))
     nside = hp.pixelfunc.npix2nside(n_pixels)
     index = np.where(probs == np.max(probs))
@@ -73,5 +76,12 @@ for path in fits_paths:
         "SIGNALNESS" : weight
     }
 
-    np.save(f"{numpy_dir}{filename}_probs", probs)
-    np.save(f"{numpy_dir}{filename}_dict", numpy_dict)
+    zero_array = np.zeros(len(mask))
+
+    hp.write_map(
+        f"{numpy_dir}{filename}_probs.fits.gz", 
+        probs,
+        extra_header=numpy_dict,
+        overwrite=True,
+    )
+    #np.save(f"{numpy_dir}{filename}_dict", numpy_dict)
